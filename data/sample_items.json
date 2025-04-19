@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "id": "fretboard-trainer-xyz",
+      "name": "Fretboard Trainer XYZ",
+      "url": "https://example.com/fretboard-trainer",
+      "description": "Interactive tool for learning the notes on the fretboard",
+      "possible_categories": ["Online Fretboard Tools", "Music Theory Tools"],
+      "possible_tags": ["Tool", "Web", "Free", "Beginner"],
+      "notes": "Could be in multiple categories. UI is very clean."
+    },
+    {
+      "id": "guitar-shop-local",
+      "name": "Downtown Guitar Shop",
+      "url": "https://example.com/downtown-guitars",
+      "description": "Local guitar store with repairs and lessons",
+      "possible_categories": [
+        "Guitar Stores",
+        "Local Luthiers",
+        "Local Teachers"
+      ],
+      "possible_tags": ["Physical Product", "Service", "Paid"],
+      "notes": "Spans multiple categories - sells guitars, does repairs, and offers lessons"
+    },
+    {
+      "id": "scales-app-pro",
+      "name": "Scales & Modes Pro",
+      "url": "https://example.com/scales-app",
+      "description": "Mobile app for learning and practicing scales",
+      "possible_categories": ["Music Theory Tools"],
+      "possible_tags": ["App", "iOS", "Android", "Freemium", "Intermediate"],
+      "notes": "Basic version free, advanced features require subscription"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+Cool Guitar Tools is a directory of guitar and music resources
+
+It's built with:
+- React
+- Remix
+- Tailwind
+- ShadCN
+- Postgres/Supabase 
+
+And we also use:
+- Vercel (for deployment and some analytics)
+- Posthog (for feedback, and advanced analytics)
+- Supabase (for data)
+- BuyMeACoffee (for accepting tips)
+
+We always add storybook stories to all our UI components.
+We always add Jest unit tests to all our util files.
+
+When adding new React components, we give each their own folder, with a story and index.tsx to export them. The structure looks like this:
+
+📂 ReactComponentName/
+├── ReactComponentName.tsx
+├── ReactComponentName.stories.tsx
+└── index.tsx

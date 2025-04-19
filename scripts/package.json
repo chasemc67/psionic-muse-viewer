@@ -1,0 +1,7 @@
+{
+  "name": "guitar-tools-analyzer",
+  "version": "1.0.0",
+  "description": "Tool to analyze guitar directory data patterns",
+  "type": "module",
+  "private": true
+}
