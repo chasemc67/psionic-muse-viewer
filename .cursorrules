@@ -24,3 +24,9 @@ When adding new React components, we give each their own folder, with a story an
 ├── ReactComponentName.tsx
 ├── ReactComponentName.stories.tsx
 └── index.tsx
+
+Database Access Rules:
+
+- All database operations MUST be performed from backend routes only (never from components)
+- We always use the Supabase service role key for database access (never the anon key)
+- Database client (db.server.ts) should only be imported in server-side code

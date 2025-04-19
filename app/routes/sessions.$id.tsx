@@ -2,31 +2,48 @@ import { json, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { useLoaderData, Form, useNavigation } from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
 import { EEGVisualization } from '~/components/EEGVisualization';
+import { MomentsOfInterest } from '~/components/MomentsOfInterest';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { db } from '~/utils/db.server';
+import type { Database } from '~/types/database.types';
+
+type EEGSession = Database['public']['Tables']['eeg_sessions']['Row'];
+type MomentOfInterest =
+  Database['public']['Tables']['moments_of_interest']['Row'];
 
 export async function loader({ params }: LoaderFunctionArgs) {
   if (!params.id) {
     throw new Response('Session ID is required', { status: 400 });
   }
 
-  const { data: session, error } = await db
-    .from('eeg_sessions')
-    .select('*')
-    .eq('id', params.id)
-    .single();
+  const [sessionResult, momentsResult] = await Promise.all([
+    db.from('eeg_sessions').select('*').eq('id', params.id).single(),
+    db
+      .from('moments_of_interest')
+      .select('*')
+      .eq('session_id', params.id)
+      .order('timestamp', { ascending: true }),
+  ]);
 
-  if (error) {
-    console.error('Error fetching session:', error);
+  if (sessionResult.error) {
+    console.error('Error fetching session:', sessionResult.error);
     throw new Response('Error fetching session', { status: 500 });
   }
 
-  if (!session) {
+  if (!sessionResult.data) {
     throw new Response('Session not found', { status: 404 });
   }
 
-  return json({ session });
+  if (momentsResult.error) {
+    console.error('Error fetching moments:', momentsResult.error);
+    throw new Response('Error fetching moments', { status: 500 });
+  }
+
+  return json({
+    session: sessionResult.data as EEGSession,
+    moments: momentsResult.data as MomentOfInterest[],
+  });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -38,7 +55,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const notes = formData.get('notes');
   const title = formData.get('title');
 
-  // Prepare update object based on what was submitted
   const updateData: { notes?: string; title?: string; updated_at: string } = {
     updated_at: new Date().toISOString(),
   };
@@ -65,7 +81,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function SessionView() {
-  const { session } = useLoaderData<typeof loader>();
+  const { session, moments } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
 
@@ -104,6 +120,7 @@ export default function SessionView() {
       <div className="grid gap-8 md:grid-cols-2">
         <div className="space-y-8">
           <EEGVisualization sessionId={session.id} />
+          <MomentsOfInterest sessionId={session.id} initialMoments={moments} />
         </div>
         <div>
           <EEGNotes sessionId={session.id} initialNotes={session.notes || ''} />

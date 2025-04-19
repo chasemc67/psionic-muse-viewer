@@ -1,6 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { useFetcher } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import type { Options, Chart, SelectEventObject } from 'highcharts';
+import Highcharts, { ChartOptions } from 'highcharts';
 
 // EEG frequency bands with their typical ranges and colors
 const EEG_BANDS = [
@@ -29,12 +32,13 @@ const generateDummyData = () => {
 };
 
 interface EEGVisualizationProps {
-  sessionId: string; // Will be used in future implementations
+  sessionId: string;
 }
 
 export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
   const [isClient, setIsClient] = useState(false);
   const chartRef = useRef(null);
+  const fetcher = useFetcher();
 
   useEffect(() => {
     setIsClient(true);
@@ -46,16 +50,41 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     // Dynamically import Highcharts only on the client side
     const initChart = async () => {
       const Highcharts = (await import('highcharts')).default;
+
+      // Enable selection without zooming
+      Highcharts.setOptions({
+        chart: {
+          zoomType: 'x',
+        },
+      });
+
       const HighchartsReact = (await import('highcharts-react-official'))
         .default;
 
       const dummyData = generateDummyData();
 
-      const options = {
+      const chartOptions: Options = {
         chart: {
-          type: 'spline',
+          type: 'line',
+          zoomType: 'x',
           backgroundColor: 'transparent',
           height: 400,
+          selectionMarkerFill: 'rgba(51,92,173,0.25)',
+          events: {
+            selection: function (event: SelectEventObject) {
+              if (event.xAxis) {
+                const startTime = event.xAxis[0].min;
+                const endTime = event.xAxis[0].max;
+                console.log('Selected time range:', { startTime, endTime });
+              }
+              return false; // Prevent zoom
+            },
+          },
+        },
+        plotOptions: {
+          series: {
+            allowPointSelect: true,
+          },
         },
         title: {
           text: undefined, // Remove title since we're using CardTitle
@@ -65,31 +94,38 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
           title: {
             text: 'Time',
             style: {
-              color: 'var(--foreground)',
+              color: '#ffffff',
             },
           },
           labels: {
             style: {
-              color: 'var(--foreground)',
+              color: '#ffffff',
             },
           },
+          lineColor: '#ffffff',
+          tickColor: '#ffffff',
         },
         yAxis: {
           title: {
             text: 'Power (dB)',
             style: {
-              color: 'var(--foreground)',
+              color: '#ffffff',
             },
           },
           labels: {
             style: {
-              color: 'var(--foreground)',
+              color: '#ffffff',
             },
           },
+          lineColor: '#ffffff',
+          tickColor: '#ffffff',
         },
         legend: {
           itemStyle: {
-            color: 'var(--foreground)',
+            color: '#ffffff',
+          },
+          itemHoverStyle: {
+            color: '#cccccc',
           },
         },
         series: EEG_BANDS.map(band => ({
@@ -107,7 +143,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
       const ChartComponent = () => (
         <HighchartsReact
           highcharts={Highcharts}
-          options={options}
+          options={chartOptions}
           ref={chartRef}
         />
       );
@@ -121,7 +157,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     };
 
     initChart();
-  }, [isClient]);
+  }, [isClient, sessionId, fetcher]);
 
   return (
     <Card className="w-full">
