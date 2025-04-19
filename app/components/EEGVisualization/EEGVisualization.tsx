@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import { useEffect, useRef, useState } from 'react';
+import type { default as HighchartsType } from 'highcharts';
+import type { default as HighchartsReactType } from 'highcharts-react-official';
 
 // EEG frequency bands with their typical ranges and colors
 const EEG_BANDS = [
@@ -29,10 +29,35 @@ const generateDummyData = () => {
 };
 
 export function EEGVisualization() {
-  const chartRef = useRef<HighchartsReact.RefObject>(null);
+  const [Highcharts, setHighcharts] = useState<typeof HighchartsType | null>(
+    null,
+  );
+  const [HighchartsReact, setHighchartsReact] = useState<
+    typeof HighchartsReactType | null
+  >(null);
+  const chartRef = useRef<HighchartsReactType.RefObject>(null);
   const dummyData = generateDummyData();
 
-  const options: Highcharts.Options = {
+  useEffect(() => {
+    // Load Highcharts and HighchartsReact on client side only
+    Promise.all([
+      import('highcharts'),
+      import('highcharts-react-official'),
+    ]).then(([highcharts, highchartsReact]) => {
+      setHighcharts(highcharts.default);
+      setHighchartsReact(highchartsReact.default);
+    });
+  }, []);
+
+  if (!Highcharts || !HighchartsReact) {
+    return (
+      <div className="w-full rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
+        Loading chart...
+      </div>
+    );
+  }
+
+  const options: HighchartsType.Options = {
     chart: {
       type: 'spline',
       backgroundColor: 'transparent',
@@ -77,6 +102,7 @@ export function EEGVisualization() {
       },
     },
     series: EEG_BANDS.map(band => ({
+      type: 'spline',
       name: band.name,
       data: dummyData[band.name],
       color: band.color,

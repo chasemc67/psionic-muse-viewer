@@ -1,0 +1,1 @@
+export { EEGNotes } from './EEGNotes';

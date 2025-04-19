@@ -1,5 +1,6 @@
 import type { MetaFunction } from '@remix-run/node';
 import { EEGVisualization } from '~/components/EEGVisualization';
+import { EEGNotes } from '~/components/EEGNotes';
 
 export const meta: MetaFunction = () => {
   return [
@@ -23,8 +24,13 @@ export default function Index() {
             Visualize and annotate EEG data from your Muse S headband
           </p>
         </div>
-        <div className="w-full max-w-6xl">
-          <EEGVisualization />
+        <div className="grid w-full max-w-6xl gap-8 md:grid-cols-2">
+          <div className="w-full">
+            <EEGVisualization />
+          </div>
+          <div className="w-full">
+            <EEGNotes />
+          </div>
         </div>
       </div>
     </div>
