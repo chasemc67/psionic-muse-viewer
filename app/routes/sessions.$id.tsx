@@ -1,32 +1,60 @@
-import { json, LoaderFunctionArgs } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
-import { createClient } from '@supabase/supabase-js';
+import { json, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import { useLoaderData, Form } from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
 import { EEGVisualization } from '~/components/EEGVisualization';
 import { Button } from '~/components/ui/button';
+import { db } from '~/utils/db.server';
 import type { Database } from '~/types/supabase';
 
 export async function loader({ params }: LoaderFunctionArgs) {
   if (!params.id) {
-    throw new Error('Session ID is required');
+    throw new Response('Session ID is required', { status: 400 });
   }
 
-  const supabase = createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-  );
-
-  const { data: session, error } = await supabase
+  const { data: session, error } = await db
     .from('eeg_sessions')
     .select('*')
     .eq('id', params.id)
     .single();
 
-  if (error || !session) {
-    throw new Error('Session not found');
+  if (error) {
+    console.error('Error fetching session:', error);
+    throw new Response('Error fetching session', { status: 500 });
+  }
+
+  if (!session) {
+    throw new Response('Session not found', { status: 404 });
   }
 
   return json({ session });
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  if (!params.id) {
+    throw new Response('Session ID is required', { status: 400 });
+  }
+
+  const formData = await request.formData();
+  const notes = formData.get('notes');
+
+  if (typeof notes !== 'string') {
+    throw new Response('Notes must be a string', { status: 400 });
+  }
+
+  const { error } = await db
+    .from('eeg_sessions')
+    .update({
+      notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', params.id);
+
+  if (error) {
+    console.error('Error updating notes:', error);
+    throw new Response('Error updating notes', { status: 500 });
+  }
+
+  return json({ success: true });
 }
 
 export default function SessionView() {
@@ -53,7 +81,7 @@ export default function SessionView() {
           <EEGVisualization sessionId={session.id} />
         </div>
         <div>
-          <EEGNotes sessionId={session.id} />
+          <EEGNotes sessionId={session.id} initialNotes={session.notes || ''} />
         </div>
       </div>
     </div>

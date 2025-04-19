@@ -1,37 +1,66 @@
+import { json, redirect } from '@remix-run/node';
 import type { MetaFunction } from '@remix-run/node';
-import { EEGVisualization } from '~/components/EEGVisualization';
-import { EEGNotes } from '~/components/EEGNotes';
+import { Form, useLoaderData } from '@remix-run/react';
+import { SessionList } from '~/components/SessionList';
+import { Button } from '~/components/ui/button';
+import { db } from '~/utils/db.server';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Psionic Muse Viewer - EEG Data Visualization' },
+    { title: 'Psionic Muse Viewer - Sessions' },
     {
       name: 'description',
-      content: 'Visualize and annotate EEG data from Muse S headbands',
+      content:
+        'View and manage your EEG recording sessions from Muse S headbands',
     },
   ];
 };
 
-export default function Index() {
+export async function loader() {
+  const { data: sessions, error } = await db
+    .from('eeg_sessions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error('Failed to load sessions');
+  }
+
+  return json({ sessions: sessions || [] });
+}
+
+export async function action() {
+  const { data, error } = await db
+    .from('eeg_sessions')
+    .insert([{ title: 'New Session' }])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error('Failed to create session');
+  }
+
+  return redirect(`/sessions/${data.id}`);
+}
+
+export default function SessionsIndex() {
+  const { sessions } = useLoaderData<typeof loader>();
+
   return (
     <div className="flex min-h-screen flex-col bg-background dark">
-      <div className="container mx-auto flex flex-1 flex-col items-center gap-8 p-4 pb-20 md:pb-4">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Psionic Muse Viewer
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Visualize and annotate EEG data from your Muse S headband
-          </p>
-        </div>
-        <div className="grid w-full max-w-6xl gap-8 md:grid-cols-2">
-          <div className="w-full">
-            <EEGVisualization />
+      <div className="container mx-auto flex flex-1 flex-col gap-8 p-8">
+        <div className="flex justify-between items-center">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">EEG Sessions</h1>
+            <p className="text-lg text-muted-foreground">
+              View and manage your EEG recording sessions
+            </p>
           </div>
-          <div className="w-full">
-            <EEGNotes />
-          </div>
+          <Form method="post">
+            <Button type="submit">New Session</Button>
+          </Form>
         </div>
+        <SessionList sessions={sessions} />
       </div>
     </div>
   );
