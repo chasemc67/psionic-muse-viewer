@@ -1,4 +1,4 @@
-# [Cool Guitar Tools](https://www.coolguitar.tools)
+# Psionic Muse Viewer
 
 ## Development
 

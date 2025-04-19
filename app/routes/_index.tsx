@@ -4,10 +4,10 @@ import { categories } from '~/data/categories';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Cool Guitar Tools - Guitar Learning Tools' },
+    { title: 'Psionic Muse Viewer - EEG Data Visualization' },
     {
       name: 'description',
-      content: 'The best directory of guitar tools and learning resources',
+      content: 'Visualize and annotate EEG data from Muse S headbands',
     },
   ];
 };
@@ -18,10 +18,10 @@ export default function Index() {
       <div className="container mx-auto flex flex-1 flex-col items-center gap-8 p-4 pb-20 md:pb-4">
         <div className="flex flex-col items-center gap-4 text-center">
           <h1 className="text-4xl font-bold tracking-tight">
-            Cool Guitar Tools
+            Psionic Muse Viewer
           </h1>
           <p className="text-xl text-muted-foreground">
-            Your directory for the best guitar learning resources and tools
+            Visualize and annotate EEG data from your Muse S headband
           </p>
         </div>
 

@@ -31,26 +31,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Cool Guitar Tools</title>
-        <meta name="description" content="The best directory of guitar tools and learning resources" />
+        <title>Psionic Muse Viewer</title>
+        <meta
+          name="description"
+          content="Visualize and annotate EEG data from Muse S headbands"
+        />
 
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://coolguitar.tools" />
-        <meta property="og:title" content="Cool Guitar Tools" />
+        <meta property="og:url" content="https://psionic-muse-viewer.com" />
+        <meta property="og:title" content="Psionic Muse Viewer" />
         <meta
           property="og:description"
-          content="The best directory of guitar tools and learning resources"
+          content="Visualize and annotate EEG data from Muse S headbands"
         />
         <meta property="og:image" content="/assets/og-image.png" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://coolguitar.tools" />
-        <meta name="twitter:title" content="Cool Guitar Tools" />
+        <meta name="twitter:url" content="https://psionic-muse-viewer.com" />
+        <meta name="twitter:title" content="Psionic Muse Viewer" />
         <meta
           name="twitter:description"
-          content="The best directory of guitar tools and learning resources"
+          content="Visualize and annotate EEG data from Muse S headbands"
         />
         <meta name="twitter:image" content="/assets/og-image.png" />
 

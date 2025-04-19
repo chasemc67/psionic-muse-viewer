@@ -1,13 +1,15 @@
-Cool Guitar Tools is a directory of guitar and music resources
+Psionic Muse Viewer is a web application for visualizing and annotating EEG data from Muse S headbands
 
 It's built with:
+
 - React
 - Remix
 - Tailwind
 - ShadCN
-- Postgres/Supabase 
+- Postgres/Supabase
 
 And we also use:
+
 - Vercel (for deployment and some analytics)
 - Posthog (for feedback, and advanced analytics)
 - Supabase (for data)
