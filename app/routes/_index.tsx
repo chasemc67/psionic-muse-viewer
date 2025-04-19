@@ -24,12 +24,6 @@ export default function Index() {
             Visualize and annotate EEG data from your Muse S headband
           </p>
         </div>
-
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map(category => (
-            <CategoryCard key={category.id} {...category} />
-          ))}
-        </div>
       </div>
     </div>
   );
