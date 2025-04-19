@@ -1,10 +1,10 @@
 import { json, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { useLoaderData, Form } from '@remix-run/react';
+import { useLoaderData, Form, useNavigation } from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
 import { EEGVisualization } from '~/components/EEGVisualization';
 import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
 import { db } from '~/utils/db.server';
-import type { Database } from '~/types/supabase';
 
 export async function loader({ params }: LoaderFunctionArgs) {
   if (!params.id) {
@@ -36,22 +36,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const formData = await request.formData();
   const notes = formData.get('notes');
+  const title = formData.get('title');
 
-  if (typeof notes !== 'string') {
-    throw new Response('Notes must be a string', { status: 400 });
+  // Prepare update object based on what was submitted
+  const updateData: { notes?: string; title?: string; updated_at: string } = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (typeof notes === 'string') {
+    updateData.notes = notes;
+  }
+
+  if (typeof title === 'string') {
+    updateData.title = title;
   }
 
   const { error } = await db
     .from('eeg_sessions')
-    .update({
-      notes,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', params.id);
 
   if (error) {
-    console.error('Error updating notes:', error);
-    throw new Response('Error updating notes', { status: 500 });
+    console.error('Error updating session:', error);
+    throw new Response('Error updating session', { status: 500 });
   }
 
   return json({ success: true });
@@ -59,17 +66,35 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function SessionView() {
   const { session } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
+  const isSaving = navigation.state === 'submitting';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="flex justify-between items-center">
-        <div>
+        <div className="space-y-4">
           <Button variant="ghost" asChild className="mb-2">
             <a href="/sessions">← Back to Sessions</a>
           </Button>
-          <h1 className="text-3xl font-bold">
-            {session.title || 'Untitled Session'}
-          </h1>
+          <Form method="post" className="space-y-2">
+            <Input
+              type="text"
+              name="title"
+              defaultValue={session.title || ''}
+              placeholder="Enter session title"
+              className="text-3xl font-bold h-12 px-0 border-0 bg-transparent focus-visible:ring-0 rounded-none"
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Title'}
+              </Button>
+            </div>
+          </Form>
           <p className="text-muted-foreground">
             Created {new Date(session.created_at!).toLocaleDateString()}
           </p>
