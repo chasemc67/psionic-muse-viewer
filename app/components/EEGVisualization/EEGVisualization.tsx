@@ -2,10 +2,8 @@ import { useRef, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useFetcher } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import type {
-  Options as HighchartsOptions,
-  SelectEventObject,
-} from 'highcharts';
+import type { Options, Chart, SelectEventObject } from 'highcharts';
+import Highcharts, { ChartOptions } from 'highcharts';
 
 // EEG frequency bands with their typical ranges and colors
 const EEG_BANDS = [
@@ -16,42 +14,38 @@ const EEG_BANDS = [
   { name: 'Gamma', range: [30, 100], color: '#22c55e' }, // Green
 ];
 
+// Generate dummy data for each band
+const generateDummyData = () => {
+  const data: { [key: string]: [number, number][] } = {};
+  const now = Date.now();
+
+  EEG_BANDS.forEach(band => {
+    data[band.name] = Array.from({ length: 100 }, (_, i) => {
+      const time = now - (100 - i) * 100; // 100ms intervals
+      const value =
+        Math.random() * (band.range[1] - band.range[0]) + band.range[0];
+      return [time, value];
+    });
+  });
+
+  return data;
+};
+
 interface EEGVisualizationProps {
   sessionId: string;
 }
-
-type EEGData = Record<string, [number, number][]>;
 
 export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
   const [isClient, setIsClient] = useState(false);
   const chartRef = useRef(null);
   const fetcher = useFetcher();
-  const [data, setData] = useState<EEGData>({
-    Delta: [],
-    Theta: [],
-    Alpha: [],
-    Beta: [],
-    Gamma: [],
-  });
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Fetch data when component mounts
   useEffect(() => {
-    fetcher.load(`/api/eeg/${sessionId}`);
-  }, [sessionId, fetcher]);
-
-  // Update data when fetcher returns
-  useEffect(() => {
-    if (fetcher.data) {
-      setData(fetcher.data as EEGData);
-    }
-  }, [fetcher.data]);
-
-  useEffect(() => {
-    if (!isClient || Object.keys(data).length === 0) return;
+    if (!isClient) return;
 
     // Dynamically import Highcharts only on the client side
     const initChart = async () => {
@@ -60,21 +54,19 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
       // Enable selection without zooming
       Highcharts.setOptions({
         chart: {
-          zooming: {
-            type: 'x',
-          },
+          zoomType: 'x',
         },
       });
 
       const HighchartsReact = (await import('highcharts-react-official'))
         .default;
 
-      const chartOptions: HighchartsOptions = {
+      const dummyData = generateDummyData();
+
+      const chartOptions: Options = {
         chart: {
           type: 'line',
-          zooming: {
-            type: 'x',
-          },
+          zoomType: 'x',
           backgroundColor: 'transparent',
           height: 400,
           selectionMarkerFill: 'rgba(51,92,173,0.25)',
@@ -95,7 +87,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
           },
         },
         title: {
-          text: undefined,
+          text: undefined, // Remove title since we're using CardTitle
         },
         xAxis: {
           type: 'datetime',
@@ -139,7 +131,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         series: EEG_BANDS.map(band => ({
           type: 'spline',
           name: band.name,
-          data: data[band.name] || [],
+          data: dummyData[band.name],
           color: band.color,
           lineWidth: 2,
         })),
@@ -165,7 +157,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     };
 
     initChart();
-  }, [isClient, sessionId, data]);
+  }, [isClient, sessionId, fetcher]);
 
   return (
     <Card className="w-full">
@@ -179,9 +171,6 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         >
           {!isClient && (
             <p className="text-muted-foreground">Loading visualization...</p>
-          )}
-          {isClient && fetcher.state === 'loading' && (
-            <p className="text-muted-foreground">Loading data...</p>
           )}
         </div>
       </CardContent>
