@@ -35,6 +35,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "dotenv": "^16.4.7",
+    "highcharts": "^12.2.0",
+    "highcharts-react-official": "^3.2.1",
     "isbot": "^4.1.0",
     "lucide-react": "^0.469.0",
     "posthog-js": "^1.211.2",
