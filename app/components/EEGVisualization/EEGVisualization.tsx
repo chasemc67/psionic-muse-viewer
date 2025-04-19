@@ -1,53 +1,127 @@
+import { useRef, useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
-interface EEGDataPoint {
-  timestamp: number;
-  channels: {
-    TP9: number;
-    AF7: number;
-    AF8: number;
-    TP10: number;
-  };
-}
+// EEG frequency bands with their typical ranges and colors
+const EEG_BANDS = [
+  { name: 'Delta', range: [0.5, 4], color: '#6366f1' }, // Indigo
+  { name: 'Theta', range: [4, 8], color: '#8b5cf6' }, // Violet
+  { name: 'Alpha', range: [8, 13], color: '#ec4899' }, // Pink
+  { name: 'Beta', range: [13, 30], color: '#f97316' }, // Orange
+  { name: 'Gamma', range: [30, 100], color: '#22c55e' }, // Green
+];
 
-// Mock data generator function
-function generateMockEEGData(duration: number = 5): EEGDataPoint[] {
-  const sampleRate = 256; // Hz
-  const numSamples = duration * sampleRate;
-  const data: EEGDataPoint[] = [];
+// Generate dummy data for each band
+const generateDummyData = () => {
+  const data: { [key: string]: [number, number][] } = {};
+  const now = Date.now();
 
-  for (let i = 0; i < numSamples; i++) {
-    const timestamp = i * (1000 / sampleRate); // Convert to milliseconds
-    data.push({
-      timestamp,
-      channels: {
-        // Generate realistic-looking EEG waves using sine waves of different frequencies
-        TP9:
-          Math.sin(2 * Math.PI * 10 * (i / sampleRate)) * 50 +
-          Math.random() * 10,
-        AF7:
-          Math.sin(2 * Math.PI * 8 * (i / sampleRate)) * 45 +
-          Math.random() * 10,
-        AF8:
-          Math.sin(2 * Math.PI * 12 * (i / sampleRate)) * 55 +
-          Math.random() * 10,
-        TP10:
-          Math.sin(2 * Math.PI * 9 * (i / sampleRate)) * 48 +
-          Math.random() * 10,
-      },
+  EEG_BANDS.forEach(band => {
+    data[band.name] = Array.from({ length: 100 }, (_, i) => {
+      const time = now - (100 - i) * 100; // 100ms intervals
+      const value =
+        Math.random() * (band.range[1] - band.range[0]) + band.range[0];
+      return [time, value];
     });
-  }
+  });
 
   return data;
-}
+};
 
 interface EEGVisualizationProps {
-  sessionId: string;
+  sessionId: string; // Will be used in future implementations
 }
 
 export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
-  // Generate 5 seconds of mock data
-  const mockData = generateMockEEGData(5);
+  const [isClient, setIsClient] = useState(false);
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Dynamically import Highcharts only on the client side
+    const initChart = async () => {
+      const Highcharts = (await import('highcharts')).default;
+      const HighchartsReact = (await import('highcharts-react-official'))
+        .default;
+
+      const dummyData = generateDummyData();
+
+      const options = {
+        chart: {
+          type: 'spline',
+          backgroundColor: 'transparent',
+          height: 400,
+        },
+        title: {
+          text: undefined, // Remove title since we're using CardTitle
+        },
+        xAxis: {
+          type: 'datetime',
+          title: {
+            text: 'Time',
+            style: {
+              color: 'var(--foreground)',
+            },
+          },
+          labels: {
+            style: {
+              color: 'var(--foreground)',
+            },
+          },
+        },
+        yAxis: {
+          title: {
+            text: 'Power (dB)',
+            style: {
+              color: 'var(--foreground)',
+            },
+          },
+          labels: {
+            style: {
+              color: 'var(--foreground)',
+            },
+          },
+        },
+        legend: {
+          itemStyle: {
+            color: 'var(--foreground)',
+          },
+        },
+        series: EEG_BANDS.map(band => ({
+          type: 'spline',
+          name: band.name,
+          data: dummyData[band.name],
+          color: band.color,
+          lineWidth: 2,
+        })),
+        credits: {
+          enabled: false,
+        },
+      };
+
+      const ChartComponent = () => (
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          ref={chartRef}
+        />
+      );
+
+      // Find the container and render the chart
+      const container = document.getElementById('chart-container');
+      if (container) {
+        const root = createRoot(container);
+        root.render(<ChartComponent />);
+      }
+    };
+
+    initChart();
+  }, [isClient]);
 
   return (
     <Card className="w-full">
@@ -55,12 +129,13 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         <CardTitle>EEG Visualization</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* TODO: Implement EEG visualization with mockData */}
-        <div className="h-[400px] flex items-center justify-center bg-muted rounded-md">
-          <p className="text-muted-foreground">
-            EEG visualization coming soon... ({mockData.length} samples
-            generated)
-          </p>
+        <div
+          id="chart-container"
+          className="h-[400px] flex items-center justify-center bg-muted rounded-md"
+        >
+          {!isClient && (
+            <p className="text-muted-foreground">Loading visualization...</p>
+          )}
         </div>
       </CardContent>
     </Card>
