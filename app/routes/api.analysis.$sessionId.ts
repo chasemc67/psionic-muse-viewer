@@ -20,7 +20,11 @@ export const action: ActionFunction = async ({ request, params }) => {
   try {
     const { promptName, notes, addedContext } = await request.json();
 
-    const templatePath = path.join(process.cwd(), 'ai-prompts', `${promptName}.md`);
+    const templatePath = path.join(
+      process.cwd(),
+      'ai-prompts/analysis',
+      `${promptName}.md`,
+    );
     const promptTemplate = await fs.readFile(templatePath, 'utf8');
 
     const analysisTemplate = new PromptTemplate({
@@ -28,7 +32,10 @@ export const action: ActionFunction = async ({ request, params }) => {
       template: promptTemplate,
     });
 
-    const formattedPrompt = await analysisTemplate.format({ notes, addedContext });
+    const formattedPrompt = await analysisTemplate.format({
+      notes,
+      addedContext,
+    });
 
     const response = await llm.invoke(formattedPrompt);
     return json({ content: response.content });
