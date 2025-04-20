@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
+import { useVideoPlayer } from '~/contexts/VideoPlayerContext';
 import type { Database } from '~/types/database.types';
 
 type MomentRow = Database['public']['Tables']['moments_of_interest']['Row'];
@@ -27,11 +28,20 @@ export function MomentsOfInterest({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState('');
   const fetcher = useFetcher();
+  const { getRealWorldTime } = useVideoPlayer();
 
   const addNewMoment = () => {
+    const realWorldTime = getRealWorldTime();
+    if (!realWorldTime) {
+      alert(
+        'Please start playing the video first to capture the correct timestamp',
+      );
+      return;
+    }
+
     const formData = new FormData();
     formData.append('intent', 'create');
-    formData.append('timestamp', new Date().toISOString());
+    formData.append('timestamp', realWorldTime.toISOString());
     formData.append('note', '');
 
     fetcher.submit(formData, {
@@ -54,7 +64,9 @@ export function MomentsOfInterest({
         // Handle update response
         const updatedNote = editNote;
         setMoments(prev =>
-          prev.map(m => (m.id === editingId ? { ...m, note: updatedNote } : m)),
+          prev.map(m =>
+            m.id === editingId ? { ...m, notes: updatedNote } : m,
+          ),
         );
         setEditingId(null);
       }
@@ -63,7 +75,7 @@ export function MomentsOfInterest({
 
   const startEditing = (moment: MomentRow) => {
     setEditingId(moment.id);
-    setEditNote(moment.note);
+    setEditNote(moment.notes || '');
   };
 
   const saveMoment = (id: string) => {
@@ -106,7 +118,7 @@ export function MomentsOfInterest({
                     placeholder="Enter note..."
                   />
                 ) : (
-                  moment.note
+                  moment.notes
                 )}
               </TableCell>
               <TableCell>

@@ -1,0 +1,2 @@
+ALTER TABLE eeg_sessions
+ADD COLUMN video_start_time TIMESTAMP WITH TIME ZONE; 

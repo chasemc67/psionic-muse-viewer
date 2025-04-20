@@ -1,12 +1,15 @@
 import { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { useVideoPlayer } from '~/contexts/VideoPlayerContext';
 
 interface VideoPlayerProps {
   videoUrl: string | null;
+  videoStartTime: string | null;
 }
 
-export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, videoStartTime }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { setCurrentTime, setVideoStartTime } = useVideoPlayer();
 
   // Reset video when URL changes
   useEffect(() => {
@@ -14,6 +17,18 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
       videoRef.current.load();
     }
   }, [videoUrl]);
+
+  // Update video start time when it changes
+  useEffect(() => {
+    setVideoStartTime(videoStartTime);
+  }, [videoStartTime, setVideoStartTime]);
+
+  // Update current time when video time changes
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
 
   if (!videoUrl) {
     return (
@@ -43,6 +58,7 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
             controls
             controlsList="nodownload"
             playsInline
+            onTimeUpdate={handleTimeUpdate}
           >
             <source src={videoUrl} type="video/mp4" />
             <track kind="captions" />

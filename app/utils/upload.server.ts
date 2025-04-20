@@ -28,10 +28,14 @@ export const uploadHandler: UploadHandler = async ({
   // Determine bucket based on upload type
   let bucket = 'csv-files';
   let contentType = 'text/csv';
+  let metadata = {};
 
   if (name === 'video') {
     bucket = 'eeg_session_videos';
     contentType = 'video/mp4';
+    metadata = {
+      creationTime: new Date().toISOString(),
+    };
   }
 
   const { data: uploadData, error } = await supabase.storage
@@ -53,5 +57,6 @@ export const uploadHandler: UploadHandler = async ({
 
   return JSON.stringify({
     publicUrl,
+    metadata,
   });
 };

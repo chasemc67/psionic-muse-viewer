@@ -19,6 +19,7 @@ export interface Database {
           notes: string | null;
           csv_file_path: string | null;
           video_url: string | null;
+          video_start_time: string | null;
         };
         Insert: {
           id?: string;
@@ -29,6 +30,7 @@ export interface Database {
           notes?: string | null;
           csv_file_path?: string | null;
           video_url?: string | null;
+          video_start_time?: string | null;
         };
         Update: {
           id?: string;
@@ -39,7 +41,9 @@ export interface Database {
           notes?: string | null;
           csv_file_path?: string | null;
           video_url?: string | null;
+          video_start_time?: string | null;
         };
+        Relationships: [];
       };
       moments_of_interest: {
         Row: {
@@ -63,6 +67,15 @@ export interface Database {
           timestamp?: number;
           notes?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'moments_of_interest_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'eeg_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
@@ -72,6 +85,9 @@ export interface Database {
       [_ in never]: never;
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };

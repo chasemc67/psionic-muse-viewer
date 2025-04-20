@@ -17,6 +17,7 @@ import { MomentsOfInterest } from '~/components/MomentsOfInterest';
 import { CSVUpload } from '~/components/CSVUpload';
 import { VideoUpload } from '~/components/VideoUpload';
 import { VideoPlayer } from '~/components/VideoPlayer';
+import { VideoPlayerProvider } from '~/contexts/VideoPlayerContext';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Skeleton } from '~/components/ui/skeleton';
@@ -105,12 +106,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const videoUploadResult = formData.get('video');
   if (videoUploadResult) {
     try {
-      const { publicUrl } = JSON.parse(videoUploadResult as string);
+      const { publicUrl, metadata } = JSON.parse(videoUploadResult as string);
 
       const { error: updateError } = await db
         .from('eeg_sessions')
         .update({
           video_url: publicUrl,
+          video_start_time: metadata.creationTime,
           updated_at: new Date().toISOString(),
         })
         .eq('id', params.id);
@@ -186,105 +188,116 @@ export default function SessionView() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <div className="space-y-4">
-          <Button variant="ghost" asChild className="mb-2">
-            <a href="/sessions">← Back to Sessions</a>
-          </Button>
-          <Form method="post" className="space-y-2">
-            <Input
-              type="text"
-              name="title"
-              defaultValue={session.title || ''}
-              placeholder="Enter session title"
-              className="text-3xl font-bold h-12 px-0 border-0 bg-transparent focus-visible:ring-0 rounded-none"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                type="submit"
-                variant="outline"
-                size="sm"
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Save Title'}
-              </Button>
-            </div>
-          </Form>
-          <p className="text-muted-foreground">
-            Created {new Date(session.created_at!).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="space-y-8">
-          {!session.csv_file_path ? (
-            <CSVUpload
-              onUpload={handleCSVUpload}
-              isUploading={isUploadingCSV}
-              hasExistingFile={false}
-            />
-          ) : isLoadingCSV ? (
-            <div className="space-y-4 p-6 border rounded-lg">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-[200px] w-full" />
-              <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-8" />
-                <Skeleton className="h-8" />
+    <VideoPlayerProvider>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="flex justify-between items-center">
+          <div className="space-y-4">
+            <Button variant="ghost" asChild className="mb-2">
+              <a href="/sessions">← Back to Sessions</a>
+            </Button>
+            <Form method="post" className="space-y-2">
+              <Input
+                type="text"
+                name="title"
+                defaultValue={session.title || ''}
+                placeholder="Enter session title"
+                className="text-3xl font-bold h-12 px-0 border-0 bg-transparent focus-visible:ring-0 rounded-none"
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="sm"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Title'}
+                </Button>
               </div>
-            </div>
-          ) : csvFetcher.data ? (
-            <EEGVisualization data={csvFetcher.data} />
-          ) : (
-            <div className="p-4 border border-red-500 rounded-lg">
-              <p className="text-red-500">
-                Error loading CSV data. Please try uploading again.
-              </p>
+            </Form>
+            <p className="text-muted-foreground">
+              Created {new Date(session.created_at!).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-8">
+            {!session.csv_file_path ? (
               <CSVUpload
                 onUpload={handleCSVUpload}
                 isUploading={isUploadingCSV}
-                hasExistingFile={true}
+                hasExistingFile={false}
               />
-            </div>
-          )}
-
-          {!session.video_url ? (
-            <VideoUpload
-              onUpload={handleVideoUpload}
-              isUploading={isUploadingVideo}
-              hasExistingFile={false}
-            />
-          ) : isUploadingVideo ? (
-            <div className="space-y-4 p-6 border rounded-lg">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-[300px] w-full" />
-              <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-8" />
-                <Skeleton className="h-8" />
+            ) : isLoadingCSV ? (
+              <div className="space-y-4 p-6 border rounded-lg">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-[200px] w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-8" />
+                  <Skeleton className="h-8" />
+                </div>
               </div>
-            </div>
-          ) : session.video_url ? (
-            <VideoPlayer videoUrl={session.video_url} />
-          ) : (
-            <div className="p-4 border border-red-500 rounded-lg">
-              <p className="text-red-500">
-                Error loading video. Please try uploading again.
-              </p>
+            ) : csvFetcher.data ? (
+              <EEGVisualization data={csvFetcher.data} />
+            ) : (
+              <div className="p-4 border border-red-500 rounded-lg">
+                <p className="text-red-500">
+                  Error loading CSV data. Please try uploading again.
+                </p>
+                <CSVUpload
+                  onUpload={handleCSVUpload}
+                  isUploading={isUploadingCSV}
+                  hasExistingFile={true}
+                />
+              </div>
+            )}
+
+            {!session.video_url ? (
               <VideoUpload
                 onUpload={handleVideoUpload}
                 isUploading={isUploadingVideo}
-                hasExistingFile={true}
+                hasExistingFile={false}
               />
-            </div>
-          )}
+            ) : isUploadingVideo ? (
+              <div className="space-y-4 p-6 border rounded-lg">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-[300px] w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-8" />
+                  <Skeleton className="h-8" />
+                </div>
+              </div>
+            ) : session.video_url ? (
+              <VideoPlayer
+                videoUrl={session.video_url}
+                videoStartTime={session.video_start_time}
+              />
+            ) : (
+              <div className="p-4 border border-red-500 rounded-lg">
+                <p className="text-red-500">
+                  Error loading video. Please try uploading again.
+                </p>
+                <VideoUpload
+                  onUpload={handleVideoUpload}
+                  isUploading={isUploadingVideo}
+                  hasExistingFile={true}
+                />
+              </div>
+            )}
 
-          <MomentsOfInterest sessionId={session.id} initialMoments={moments} />
-        </div>
-        <div>
-          <EEGNotes sessionId={session.id} initialNotes={session.notes || ''} />
+            <MomentsOfInterest
+              sessionId={session.id}
+              initialMoments={moments}
+            />
+          </div>
+          <div>
+            <EEGNotes
+              sessionId={session.id}
+              initialNotes={session.notes || ''}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </VideoPlayerProvider>
   );
 }
