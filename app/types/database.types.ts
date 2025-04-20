@@ -12,6 +12,7 @@ export interface Database {
       eeg_sessions: {
         Row: {
           id: string;
+          analysis: string | null;
           created_at: string | null;
           updated_at: string | null;
           user_id: string | null;
@@ -23,6 +24,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          analysis?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
@@ -34,6 +36,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          analysis?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
