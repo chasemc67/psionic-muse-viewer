@@ -11,57 +11,57 @@ export interface Database {
     Tables: {
       eeg_sessions: {
         Row: {
-          created_at: string | null;
-          csv_file_path: string | null;
           id: string;
-          notes: string | null;
-          title: string | null;
+          created_at: string | null;
           updated_at: string | null;
           user_id: string | null;
+          title: string | null;
+          notes: string | null;
+          csv_file_path: string | null;
+          video_url: string | null;
         };
         Insert: {
-          created_at?: string | null;
-          csv_file_path?: string | null;
           id?: string;
-          notes?: string | null;
-          title?: string | null;
+          created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
+          title?: string | null;
+          notes?: string | null;
+          csv_file_path?: string | null;
+          video_url?: string | null;
         };
         Update: {
-          created_at?: string | null;
-          csv_file_path?: string | null;
           id?: string;
-          notes?: string | null;
-          title?: string | null;
+          created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
+          title?: string | null;
+          notes?: string | null;
+          csv_file_path?: string | null;
+          video_url?: string | null;
         };
       };
       moments_of_interest: {
         Row: {
-          created_at: string | null;
           id: string;
-          note: string;
+          created_at: string | null;
           session_id: string;
-          timestamp: string;
-          updated_at: string | null;
+          timestamp: number;
+          notes: string | null;
         };
         Insert: {
-          created_at?: string | null;
           id?: string;
-          note: string;
+          created_at?: string | null;
           session_id: string;
-          timestamp: string;
-          updated_at?: string | null;
+          timestamp: number;
+          notes?: string | null;
         };
         Update: {
-          created_at?: string | null;
           id?: string;
-          note?: string;
+          created_at?: string | null;
           session_id?: string;
-          timestamp?: string;
-          updated_at?: string | null;
+          timestamp?: number;
+          notes?: string | null;
         };
       };
     };

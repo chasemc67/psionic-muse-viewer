@@ -12,37 +12,46 @@ const supabase = createClient(
 
 export const uploadHandler: UploadHandler = async ({
   name,
-  contentType,
   data,
+  filename,
 }) => {
-  if (name !== 'csv') {
-    return undefined;
+  if (!filename) {
+    return '';
   }
 
-  // Convert stream to buffer
   const chunks = [];
   for await (const chunk of data) {
     chunks.push(chunk);
   }
   const buffer = Buffer.concat(chunks);
 
-  const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.csv`;
-  const { error } = await supabase.storage
-    .from('csv-files')
-    .upload(filename, buffer, {
-      contentType: 'text/csv',
+  // Determine bucket based on upload type
+  let bucket = 'csv-files';
+  let contentType = 'text/csv';
+
+  if (name === 'video') {
+    bucket = 'eeg_session_videos';
+    contentType = 'video/mp4';
+  }
+
+  const { data: uploadData, error } = await supabase.storage
+    .from(bucket)
+    .upload(`${Date.now()}-${filename}`, buffer, {
+      contentType,
+      cacheControl: '3600',
       upsert: false,
     });
 
   if (error) {
     console.error('Error uploading file:', error);
-    throw new Error('Failed to upload file');
+    throw new Error('Error uploading file');
   }
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from('csv-files').getPublicUrl(filename);
+  } = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
 
-  // Return both the filename and public URL as a JSON string
-  return JSON.stringify({ filename, publicUrl });
+  return JSON.stringify({
+    publicUrl,
+  });
 };
