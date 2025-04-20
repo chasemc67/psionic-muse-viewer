@@ -20,7 +20,6 @@ export interface Database {
           notes: string | null;
           csv_file_path: string | null;
           video_url: string | null;
-          video_start_time: string | null;
         };
         Insert: {
           id?: string;

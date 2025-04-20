@@ -12,6 +12,7 @@ import {
   useFetcher,
 } from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
+import { AIAgentAnalysis } from '~/components/AIAgentAnalysis';
 import { EEGVisualization } from '~/components/EEGVisualization';
 import { MomentsOfInterest } from '~/components/MomentsOfInterest';
 import { CSVUpload } from '~/components/CSVUpload';
@@ -129,11 +130,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
   }
 
-  // Handle existing title/notes updates
+  // Handle existing title/notes/analysis updates
   const notes = formData.get('notes');
   const title = formData.get('title');
+  const analysis = formData.get('analysis');
 
-  const updateData: { notes?: string; title?: string; updated_at: string } = {
+  const updateData: {
+    notes?: string;
+    title?: string;
+    analysis?: string;
+    updated_at: string;
+  } = {
     updated_at: new Date().toISOString(),
   };
 
@@ -143,6 +150,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (typeof title === 'string') {
     updateData.title = title;
+  }
+  if (typeof analysis === 'string') {
+    updateData.analysis = analysis;
   }
 
   const { error } = await db
@@ -256,6 +266,7 @@ export default function SessionView() {
               sessionId={session.id}
               initialNotes={session.notes || ''}
             />
+            <AIAgentAnalysis session={session} />
           </div>
 
           <div className="space-y-8">
