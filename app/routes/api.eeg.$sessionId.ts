@@ -5,16 +5,23 @@ import { parseEEGCSV } from '~/utils/csv.server';
 export async function loader({ params }: LoaderFunctionArgs) {
   // For now, we'll always return the sample data
   // Later, this will be replaced with a DB query using the sessionId
-  const data = await parseEEGCSV('sample-eeg.csv');
+  const data = await parseEEGCSV('muse_data_1745103171242.csv');
 
-  // Transform the data into the format expected by the visualization
-  const formattedData = {
-    Delta: data.map(point => [point.timestamp, point.delta]),
-    Theta: data.map(point => [point.timestamp, point.theta]),
-    Alpha: data.map(point => [point.timestamp, point.alpha]),
-    Beta: data.map(point => [point.timestamp, point.beta]),
-    Gamma: data.map(point => [point.timestamp, point.gamma]),
-  };
+  // Group data by electrode
+  const electrodeData = data.reduce(
+    (acc, point) => {
+      const electrode = `Electrode ${point.electrode}`;
+      if (!acc[electrode]) {
+        acc[electrode] = [];
+      }
+      // Average the signal values
+      const avgSignal =
+        (point.s1 + point.s2 + point.s3 + point.s4 + point.s5) / 5;
+      acc[electrode].push([point.timestamp, avgSignal]);
+      return acc;
+    },
+    {} as Record<string, [number, number][]>,
+  );
 
-  return json(formattedData);
+  return json(electrodeData);
 }

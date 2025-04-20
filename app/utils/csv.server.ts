@@ -3,11 +3,13 @@ import { join } from 'path';
 
 export interface EEGDataPoint {
   timestamp: number;
-  delta: number;
-  theta: number;
-  alpha: number;
-  beta: number;
-  gamma: number;
+  electrode: number;
+  s1: number;
+  s2: number;
+  s3: number;
+  s4: number;
+  s5: number;
+  intuitive: number;
 }
 
 export async function parseEEGCSV(filename: string): Promise<EEGDataPoint[]> {
@@ -21,11 +23,13 @@ export async function parseEEGCSV(filename: string): Promise<EEGDataPoint[]> {
     const values = line.split(',').map(Number);
     return {
       timestamp: values[0],
-      delta: values[1],
-      theta: values[2],
-      alpha: values[3],
-      beta: values[4],
-      gamma: values[5],
+      electrode: values[1],
+      s1: values[2],
+      s2: values[3],
+      s3: values[4],
+      s4: values[5],
+      s5: values[6],
+      intuitive: values[7],
     };
   });
 }

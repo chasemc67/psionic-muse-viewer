@@ -4,14 +4,13 @@ import { useFetcher } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { Options, SelectEventObject } from 'highcharts';
 
-// EEG frequency bands with their typical ranges and colors
-const EEG_BANDS = [
-  { name: 'Delta', range: [0.5, 4], color: '#6366f1' }, // Indigo
-  { name: 'Theta', range: [4, 8], color: '#8b5cf6' }, // Violet
-  { name: 'Alpha', range: [8, 13], color: '#ec4899' }, // Pink
-  { name: 'Beta', range: [13, 30], color: '#f97316' }, // Orange
-  { name: 'Gamma', range: [30, 100], color: '#22c55e' }, // Green
-];
+// Electrode colors
+const ELECTRODE_COLORS = {
+  'Electrode 0': '#6366f1', // Indigo
+  'Electrode 1': '#8b5cf6', // Violet
+  'Electrode 2': '#ec4899', // Pink
+  'Electrode 3': '#f97316', // Orange
+};
 
 interface EEGVisualizationProps {
   sessionId: string;
@@ -106,7 +105,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         },
         yAxis: {
           title: {
-            text: 'Power (dB)',
+            text: 'Signal Strength',
             style: {
               color: '#ffffff',
             },
@@ -127,11 +126,11 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
             color: '#cccccc',
           },
         },
-        series: EEG_BANDS.map(band => ({
+        series: Object.entries(eegData).map(([electrode, data]) => ({
           type: 'spline',
-          name: band.name,
-          data: eegData[band.name] || [],
-          color: band.color,
+          name: electrode,
+          data: data,
+          color: ELECTRODE_COLORS[electrode as keyof typeof ELECTRODE_COLORS],
           lineWidth: 2,
         })),
         credits: {
@@ -155,7 +154,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     };
 
     initChart();
-  }, [isClient, eegData]); // Only re-run when isClient or eegData changes
+  }, [isClient, eegData]);
 
   return (
     <Card className="w-full">
