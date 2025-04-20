@@ -8,11 +8,11 @@ import path from 'path';
  */
 export const loader: LoaderFunction = async () => {
   try {
-    const promptsDir = path.join(process.cwd(), 'ai-prompts');
+    const promptsDir = path.join(process.cwd(), 'ai-prompts/analysis');
     const files = await fs.readdir(promptsDir);
     const prompts = files
-      .filter((name) => name.endsWith('.md'))
-      .map((name) => name.replace(/\.md$/, ''));
+      .filter(name => name.endsWith('.md'))
+      .map(name => name.replace(/\.md$/, ''));
     return json({ prompts });
   } catch (error) {
     console.error('Error reading ai-prompts directory:', error);
