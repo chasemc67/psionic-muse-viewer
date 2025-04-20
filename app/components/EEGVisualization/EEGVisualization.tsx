@@ -2,8 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useFetcher } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import type { Options, Chart, SelectEventObject } from 'highcharts';
-import Highcharts, { ChartOptions } from 'highcharts';
+import type { Options, SelectEventObject } from 'highcharts';
 
 // EEG frequency bands with their typical ranges and colors
 const EEG_BANDS = [
@@ -14,44 +13,46 @@ const EEG_BANDS = [
   { name: 'Gamma', range: [30, 100], color: '#22c55e' }, // Green
 ];
 
-// Generate dummy data for each band
-const generateDummyData = () => {
-  const data: { [key: string]: [number, number][] } = {};
-  const now = Date.now();
-
-  EEG_BANDS.forEach(band => {
-    data[band.name] = Array.from({ length: 100 }, (_, i) => {
-      const time = now - (100 - i) * 100; // 100ms intervals
-      const value =
-        Math.random() * (band.range[1] - band.range[0]) + band.range[0];
-      return [time, value];
-    });
-  });
-
-  return data;
-};
-
 interface EEGVisualizationProps {
   sessionId: string;
 }
 
+interface EEGData {
+  [key: string]: [number, number][];
+}
+
 export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
   const [isClient, setIsClient] = useState(false);
+  const [eegData, setEEGData] = useState<EEGData | null>(null);
   const chartRef = useRef(null);
   const fetcher = useFetcher();
 
+  // Set isClient on mount
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Fetch data once on mount
   useEffect(() => {
-    if (!isClient) return;
+    if (!sessionId) return;
+    fetcher.load(`/api/eeg/${sessionId}`);
+  }, [sessionId]);
 
-    // Dynamically import Highcharts only on the client side
+  // Update state when data is received
+  useEffect(() => {
+    if (fetcher.data) {
+      console.log('EEG Data received:', fetcher.data);
+      setEEGData(fetcher.data as EEGData);
+    }
+  }, [fetcher.data]);
+
+  // Initialize and update chart when data changes
+  useEffect(() => {
+    if (!isClient || !eegData) return;
+
     const initChart = async () => {
       const Highcharts = (await import('highcharts')).default;
 
-      // Enable selection without zooming
       Highcharts.setOptions({
         chart: {
           zoomType: 'x',
@@ -60,8 +61,6 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
 
       const HighchartsReact = (await import('highcharts-react-official'))
         .default;
-
-      const dummyData = generateDummyData();
 
       const chartOptions: Options = {
         chart: {
@@ -87,7 +86,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
           },
         },
         title: {
-          text: undefined, // Remove title since we're using CardTitle
+          text: undefined,
         },
         xAxis: {
           type: 'datetime',
@@ -131,7 +130,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         series: EEG_BANDS.map(band => ({
           type: 'spline',
           name: band.name,
-          data: dummyData[band.name],
+          data: eegData[band.name] || [],
           color: band.color,
           lineWidth: 2,
         })),
@@ -148,7 +147,6 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
         />
       );
 
-      // Find the container and render the chart
       const container = document.getElementById('chart-container');
       if (container) {
         const root = createRoot(container);
@@ -157,7 +155,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     };
 
     initChart();
-  }, [isClient, sessionId, fetcher]);
+  }, [isClient, eegData]); // Only re-run when isClient or eegData changes
 
   return (
     <Card className="w-full">
