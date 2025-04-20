@@ -252,6 +252,13 @@ export default function SessionView() {
               </div>
             )}
 
+            <EEGNotes
+              sessionId={session.id}
+              initialNotes={session.notes || ''}
+            />
+          </div>
+
+          <div className="space-y-8">
             {!session.video_url ? (
               <VideoUpload
                 onUpload={handleVideoUpload}
@@ -284,15 +291,10 @@ export default function SessionView() {
                 />
               </div>
             )}
-          </div>
-          <div className="space-y-8">
+
             <MomentsOfInterest
               sessionId={session.id}
               initialMoments={moments}
-            />
-            <EEGNotes
-              sessionId={session.id}
-              initialNotes={session.notes || ''}
             />
           </div>
         </div>
