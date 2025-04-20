@@ -249,14 +249,34 @@ export default function SessionView() {
             </div>
           )}
 
-          <VideoPlayer videoUrl={session.video_url} />
-
-          {!session.video_url && (
+          {!session.video_url ? (
             <VideoUpload
               onUpload={handleVideoUpload}
               isUploading={isUploadingVideo}
               hasExistingFile={false}
             />
+          ) : isUploadingVideo ? (
+            <div className="space-y-4 p-6 border rounded-lg">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-[300px] w-full" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-8" />
+                <Skeleton className="h-8" />
+              </div>
+            </div>
+          ) : session.video_url ? (
+            <VideoPlayer videoUrl={session.video_url} />
+          ) : (
+            <div className="p-4 border border-red-500 rounded-lg">
+              <p className="text-red-500">
+                Error loading video. Please try uploading again.
+              </p>
+              <VideoUpload
+                onUpload={handleVideoUpload}
+                isUploading={isUploadingVideo}
+                hasExistingFile={true}
+              />
+            </div>
           )}
 
           <MomentsOfInterest sessionId={session.id} initialMoments={moments} />
