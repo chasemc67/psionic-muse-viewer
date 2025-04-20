@@ -13,6 +13,7 @@ import {
 } from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
 import { AIAgentAnalysis } from '~/components/AIAgentAnalysis';
+import { AIAgentCoach } from '~/components/AIAgentCoach';
 import { EEGVisualization } from '~/components/EEGVisualization';
 import { MomentsOfInterest } from '~/components/MomentsOfInterest';
 import { CSVUpload } from '~/components/CSVUpload';
@@ -307,6 +308,7 @@ export default function SessionView() {
               sessionId={session.id}
               initialMoments={moments}
             />
+            <AIAgentCoach />
           </div>
         </div>
       </div>
