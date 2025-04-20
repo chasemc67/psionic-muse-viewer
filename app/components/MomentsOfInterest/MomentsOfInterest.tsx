@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '~/components/ui/table';
 import { useVideoPlayer } from '~/contexts/VideoPlayerContext';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { Database } from '~/types/database.types';
 
 type MomentRow = Database['public']['Tables']['moments_of_interest']['Row'];
@@ -91,55 +92,59 @@ export function MomentsOfInterest({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Moments of Interest</h2>
-        <Button onClick={addNewMoment}>Add Moment</Button>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Timestamp</TableHead>
-            <TableHead>Note</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {moments.map(moment => (
-            <TableRow key={moment.id}>
-              <TableCell>
-                {new Date(moment.timestamp).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                {editingId === moment.id ? (
-                  <Input
-                    value={editNote}
-                    onChange={e => setEditNote(e.target.value)}
-                    placeholder="Enter note..."
-                  />
-                ) : (
-                  moment.notes
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === moment.id ? (
-                  <Button size="sm" onClick={() => saveMoment(moment.id)}>
-                    Save
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => startEditing(moment)}
-                  >
-                    Edit
-                  </Button>
-                )}
-              </TableCell>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Moments of Interest</CardTitle>
+          <Button onClick={addNewMoment}>Add Moment</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Timestamp</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {moments.map(moment => (
+              <TableRow key={moment.id}>
+                <TableCell>
+                  {new Date(moment.timestamp).toLocaleString()}
+                </TableCell>
+                <TableCell>
+                  {editingId === moment.id ? (
+                    <Input
+                      value={editNote}
+                      onChange={e => setEditNote(e.target.value)}
+                      placeholder="Enter note..."
+                    />
+                  ) : (
+                    moment.notes
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingId === moment.id ? (
+                    <Button size="sm" onClick={() => saveMoment(moment.id)}>
+                      Save
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEditing(moment)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

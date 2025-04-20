@@ -284,13 +284,12 @@ export default function SessionView() {
                 />
               </div>
             )}
-
+          </div>
+          <div className="space-y-8">
             <MomentsOfInterest
               sessionId={session.id}
               initialMoments={moments}
             />
-          </div>
-          <div>
             <EEGNotes
               sessionId={session.id}
               initialNotes={session.notes || ''}
