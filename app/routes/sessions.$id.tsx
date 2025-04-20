@@ -17,6 +17,7 @@ import { MomentsOfInterest } from '~/components/MomentsOfInterest';
 import { CSVUpload } from '~/components/CSVUpload';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { Skeleton } from '~/components/ui/skeleton';
 import { db } from '~/utils/db.server';
 import { uploadHandler } from '~/utils/upload.server';
 import type { Database } from '~/types/database.types';
@@ -134,6 +135,7 @@ export default function SessionView() {
   const isSaving = navigation.state === 'submitting';
   const isUploadingCSV = navigation.formData?.has('csv');
   const csvFetcher = useFetcher<EEGData>();
+  const isLoadingCSV = csvFetcher.state === 'loading';
 
   // Load CSV data when csv_file_path changes
   useEffect(() => {
@@ -188,23 +190,28 @@ export default function SessionView() {
               isUploading={isUploadingCSV}
               hasExistingFile={false}
             />
+          ) : isLoadingCSV ? (
+            <div className="space-y-4 p-6 border rounded-lg">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-[200px] w-full" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-8" />
+                <Skeleton className="h-8" />
+              </div>
+            </div>
+          ) : csvFetcher.data ? (
+            <EEGVisualization data={csvFetcher.data} />
           ) : (
-            <>
-              {csvFetcher.data ? (
-                <EEGVisualization data={csvFetcher.data} />
-              ) : (
-                <div className="p-4 border border-red-500 rounded-lg">
-                  <p className="text-red-500">
-                    Error loading CSV data. Please try uploading again.
-                  </p>
-                  <CSVUpload
-                    onUpload={handleCSVUpload}
-                    isUploading={isUploadingCSV}
-                    hasExistingFile={true}
-                  />
-                </div>
-              )}
-            </>
+            <div className="p-4 border border-red-500 rounded-lg">
+              <p className="text-red-500">
+                Error loading CSV data. Please try uploading again.
+              </p>
+              <CSVUpload
+                onUpload={handleCSVUpload}
+                isUploading={isUploadingCSV}
+                hasExistingFile={true}
+              />
+            </div>
           )}
           <MomentsOfInterest sessionId={session.id} initialMoments={moments} />
         </div>
