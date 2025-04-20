@@ -1,27 +1,58 @@
 import { json } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { parseEEGCSV } from '~/utils/csv.server';
+import { db } from '~/utils/db.server';
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  // For now, we'll always return the sample data
-  // Later, this will be replaced with a DB query using the sessionId
-  const data = await parseEEGCSV('muse_data_1745103171242.csv');
+  if (!params.sessionId) {
+    throw new Response('Session ID is required', { status: 400 });
+  }
 
-  // Group data by electrode
-  const electrodeData = data.reduce(
-    (acc, point) => {
-      const electrode = `Electrode ${point.electrode}`;
-      if (!acc[electrode]) {
-        acc[electrode] = [];
-      }
-      // Average the signal values
-      const avgSignal =
-        (point.s1 + point.s2 + point.s3 + point.s4 + point.s5) / 5;
-      acc[electrode].push([point.timestamp, avgSignal]);
-      return acc;
-    },
-    {} as Record<string, [number, number][]>,
-  );
+  // Get the session to find the CSV file path
+  const { data: session, error } = await db
+    .from('eeg_sessions')
+    .select('csv_file_path')
+    .eq('id', params.sessionId)
+    .single();
 
-  return json(electrodeData);
+  if (error) {
+    console.error('Error fetching session:', error);
+    throw new Response('Error fetching session', { status: 500 });
+  }
+
+  if (!session?.csv_file_path) {
+    throw new Response('No CSV file found for this session', { status: 404 });
+  }
+
+  // Download and parse the CSV file
+  try {
+    const response = await fetch(session.csv_file_path);
+    if (!response.ok) {
+      throw new Error('Failed to fetch CSV file');
+    }
+    const csvText = await response.text();
+
+    // Parse CSV data
+    const lines = csvText.trim().split('\n');
+    const electrodeData = lines.slice(1).reduce(
+      (acc, line) => {
+        const [timestamp, electrode, s1, s2, s3, s4, s5] = line
+          .split(',')
+          .map(Number);
+        const avgSignal = (s1 + s2 + s3 + s4 + s5) / 5;
+
+        const electrodeName = `Electrode ${electrode}`;
+        if (!acc[electrodeName]) {
+          acc[electrodeName] = [];
+        }
+        acc[electrodeName].push([timestamp, avgSignal]);
+        return acc;
+      },
+      {} as Record<string, [number, number][]>,
+    );
+
+    return json(electrodeData);
+  } catch (error) {
+    console.error('Error downloading/parsing CSV:', error);
+    throw new Response('Error processing CSV file', { status: 500 });
+  }
 }

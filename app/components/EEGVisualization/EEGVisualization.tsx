@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useFetcher } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { Options, SelectEventObject } from 'highcharts';
 
@@ -12,51 +11,25 @@ const ELECTRODE_COLORS = {
   'Electrode 3': '#f97316', // Orange
 };
 
-interface EEGVisualizationProps {
-  sessionId: string;
+export interface EEGVisualizationProps {
+  data: Record<string, [number, number][]>;
 }
 
-interface EEGData {
-  [key: string]: [number, number][];
-}
-
-export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
+export function EEGVisualization({ data }: EEGVisualizationProps) {
   const [isClient, setIsClient] = useState(false);
-  const [eegData, setEEGData] = useState<EEGData | null>(null);
   const chartRef = useRef(null);
-  const fetcher = useFetcher();
 
   // Set isClient on mount
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Fetch data once on mount
-  useEffect(() => {
-    if (!sessionId) return;
-    fetcher.load(`/api/eeg/${sessionId}`);
-  }, [sessionId]);
-
-  // Update state when data is received
-  useEffect(() => {
-    if (fetcher.data) {
-      console.log('EEG Data received:', fetcher.data);
-      setEEGData(fetcher.data as EEGData);
-    }
-  }, [fetcher.data]);
-
   // Initialize and update chart when data changes
   useEffect(() => {
-    if (!isClient || !eegData) return;
+    if (!isClient || !data) return;
 
     const initChart = async () => {
       const Highcharts = (await import('highcharts')).default;
-
-      Highcharts.setOptions({
-        chart: {
-          zoomType: 'x',
-        },
-      });
 
       const HighchartsReact = (await import('highcharts-react-official'))
         .default;
@@ -64,10 +37,8 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
       const chartOptions: Options = {
         chart: {
           type: 'line',
-          zoomType: 'x',
           backgroundColor: 'transparent',
           height: 400,
-          selectionMarkerFill: 'rgba(51,92,173,0.25)',
           events: {
             selection: function (event: SelectEventObject) {
               if (event.xAxis) {
@@ -126,10 +97,10 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
             color: '#cccccc',
           },
         },
-        series: Object.entries(eegData).map(([electrode, data]) => ({
+        series: Object.entries(data).map(([electrode, points]) => ({
           type: 'spline',
           name: electrode,
-          data: data,
+          data: points,
           color: ELECTRODE_COLORS[electrode as keyof typeof ELECTRODE_COLORS],
           lineWidth: 2,
         })),
@@ -154,7 +125,7 @@ export function EEGVisualization({ sessionId }: EEGVisualizationProps) {
     };
 
     initChart();
-  }, [isClient, eegData]);
+  }, [isClient, data]);
 
   return (
     <Card className="w-full">
