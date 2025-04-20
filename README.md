@@ -1,8 +1,10 @@
-# Psionic Muse Viewer
+# Muse EEG Data Annotator
 
-Pisonic Muse Viewer is a project to collect and annotate data around Anomalous Cognitive Experiences with the ultimate goal of training a model the experiences.
+This Muse EEG Data Annotator is our submission for the first inaugural SF UAP Hackathon
 
-Our system uses Remote Viewing sessions as a repeatable anomalous cognitive experience. We allow the user to upload EEG data, as well as video data of their EEG session, and then annotate specific timestamps where its believed an anomalous cognitive event has occured. 
+This project aims to collect and annotate data around Anomalous Cognitive Experiences with the ultimate goal of training a model to detect the experiences in real-time.
+
+Our system uses Remote Viewing sessions as a repeatable anomalous cognitive experience. We allow the user to upload EEG data, as well as video data of their Remote Viewing session, and then annotate specific timestamps where its believed an anomalous cognitive event has occured. 
 
 We also include some AI tools for automatically assessing and grading Remote Viewing sessions to remove self-grading bias
 
