@@ -20,10 +20,31 @@ interface AIAgentAnalysisProps {
 
 export function AIAgentAnalysis({ session }: AIAgentAnalysisProps) {
   const [promptName, setPromptName] = useState<string>('default');
+  const [promptNames, setPromptNames] = useState<string[]>([]);
+  const [loadingPrompts, setLoadingPrompts] = useState<boolean>(true);
+
+  // Load available prompt templates
+  useEffect(() => {
+    fetch('/api/prompts')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.prompts)) {
+          setPromptNames(data.prompts);
+          // Ensure selected promptName is valid
+          if (!data.prompts.includes(promptName) && data.prompts.length > 0) {
+            setPromptName(data.prompts[0]);
+          }
+        }
+      })
+      .catch((error) => console.error('Failed to load prompts', error))
+      .finally(() => setLoadingPrompts(false));
+  }, []);
   const [addedContext, setAddedContext] = useState<string>('');
   const [analysis, setAnalysis] = useState<string | null>(
     session.analysis || null,
   );
+  // Track whether the current analysis is newly generated and unsaved
+  const [hasUnsaved, setHasUnsaved] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState(false);
   const fetcher = useFetcher();
   const isSaving = fetcher.state === 'submitting';
@@ -45,6 +66,7 @@ export function AIAgentAnalysis({ session }: AIAgentAnalysisProps) {
         const data = await res.json();
         if (typeof data.content === 'string') {
           setAnalysis(data.content);
+          setHasUnsaved(true);
         }
       } else {
         console.error('Analysis request failed', res.statusText);
@@ -55,23 +77,45 @@ export function AIAgentAnalysis({ session }: AIAgentAnalysisProps) {
       setIsRunning(false);
     }
   };
+  // Reset to allow user to re-run the analysis
+  const reRunAnalysis = () => {
+    setAnalysis(null);
+    setAddedContext('');
+    setHasUnsaved(false);
+  };
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>AI Agent Analysis</CardTitle>
+        <CardTitle>AI Analysis</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {!analysis && (
           <>
             <div className="space-y-2">
               <Label htmlFor="template">Prompt Template</Label>
-              <Select value={promptName} onValueChange={setPromptName}>
+              <Select
+                value={promptName}
+                onValueChange={setPromptName}
+                disabled={loadingPrompts}
+              >
                 <SelectTrigger id="template">
-                  <SelectValue placeholder="Default" />
+                  <SelectValue placeholder={
+                    loadingPrompts ? 'Loading...' : 'Select template'
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
+                  {loadingPrompts ? (
+                    <SelectItem value="loading" disabled>
+                      Loading...
+                    </SelectItem>
+                  ) : (
+                    promptNames.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -103,13 +147,22 @@ export function AIAgentAnalysis({ session }: AIAgentAnalysisProps) {
                 {analysis}
               </pre>
             </div>
-            <div className="flex justify-end">
-              <fetcher.Form method="post">
-                <input type="hidden" name="analysis" value={analysis!} />
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save Analysis'}
-                </Button>
-              </fetcher.Form>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={reRunAnalysis} disabled={isRunning}>
+                {hasUnsaved ? 'Re-run Analysis' : 'Re-run Analysis'}
+              </Button>
+              {hasUnsaved && (
+                <fetcher.Form method="post">
+                  <input type="hidden" name="analysis" value={analysis!} />
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    onClick={() => setHasUnsaved(false)}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Analysis'}
+                  </Button>
+                </fetcher.Form>
+              )}
             </div>
           </>
         )}

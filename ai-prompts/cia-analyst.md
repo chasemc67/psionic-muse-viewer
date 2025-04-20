@@ -1,3 +1,5 @@
+You are a CIA analyst on the Stargate remote viewing program.
+
 The notes below summarize the results of a remote viewing session.
 
 Review the notes and score the session based on the following rubric:
