@@ -12,6 +12,7 @@ export interface Database {
       eeg_sessions: {
         Row: {
           created_at: string | null;
+          csv_file_path: string | null;
           id: string;
           notes: string | null;
           title: string | null;
@@ -20,6 +21,7 @@ export interface Database {
         };
         Insert: {
           created_at?: string | null;
+          csv_file_path?: string | null;
           id?: string;
           notes?: string | null;
           title?: string | null;
@@ -28,6 +30,7 @@ export interface Database {
         };
         Update: {
           created_at?: string | null;
+          csv_file_path?: string | null;
           id?: string;
           notes?: string | null;
           title?: string | null;

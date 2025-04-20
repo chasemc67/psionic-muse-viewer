@@ -1,11 +1,23 @@
-import { json, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { useLoaderData, Form, useNavigation } from '@remix-run/react';
+import {
+  json,
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
+  unstable_parseMultipartFormData,
+} from '@remix-run/node';
+import {
+  useLoaderData,
+  Form,
+  useNavigation,
+  useSubmit,
+} from '@remix-run/react';
 import { EEGNotes } from '~/components/EEGNotes';
 import { EEGVisualization } from '~/components/EEGVisualization';
 import { MomentsOfInterest } from '~/components/MomentsOfInterest';
+import { CSVUpload } from '~/components/CSVUpload';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { db } from '~/utils/db.server';
+import { uploadHandler } from '~/utils/upload.server';
 import type { Database } from '~/types/database.types';
 
 type EEGSession = Database['public']['Tables']['eeg_sessions']['Row'];
@@ -51,7 +63,39 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw new Response('Session ID is required', { status: 400 });
   }
 
-  const formData = await request.formData();
+  const formData = await (request.headers
+    .get('Content-Type')
+    ?.includes('multipart/form-data')
+    ? unstable_parseMultipartFormData(request, uploadHandler)
+    : request.formData());
+
+  // Handle CSV upload
+  const csvUploadResult = formData.get('csv');
+  if (csvUploadResult) {
+    try {
+      const { filename, publicUrl } = JSON.parse(csvUploadResult as string);
+
+      const { error: updateError } = await db
+        .from('eeg_sessions')
+        .update({
+          csv_file_path: publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', params.id);
+
+      if (updateError) {
+        console.error('Error updating session:', updateError);
+        throw new Response('Error updating session', { status: 500 });
+      }
+
+      return json({ success: true });
+    } catch (error) {
+      console.error('Error parsing upload result:', error);
+      throw new Response('Error processing upload', { status: 500 });
+    }
+  }
+
+  // Handle existing title/notes updates
   const notes = formData.get('notes');
   const title = formData.get('title');
 
@@ -83,7 +127,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function SessionView() {
   const { session, moments } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
+  const submit = useSubmit();
   const isSaving = navigation.state === 'submitting';
+  const isUploadingCSV = navigation.formData?.has('csv');
+
+  const handleCSVUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append('csv', file);
+    submit(formData, { method: 'post', encType: 'multipart/form-data' });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -119,6 +171,11 @@ export default function SessionView() {
 
       <div className="grid gap-8 md:grid-cols-2">
         <div className="space-y-8">
+          <CSVUpload
+            onUpload={handleCSVUpload}
+            isUploading={isUploadingCSV}
+            hasExistingFile={!!session.csv_file_path}
+          />
           <EEGVisualization sessionId={session.id} />
           <MomentsOfInterest sessionId={session.id} initialMoments={moments} />
         </div>
