@@ -14,6 +14,9 @@ https://github.com/user-attachments/assets/316ff2dd-0702-421e-a23d-e29f48fd6999
 
 https://github.com/user-attachments/assets/09e8f1bb-5016-4e00-b6e8-7c61a1abd83e
 
+
+Also see [muse-eeg-capture repo](https://github.com/TonySparc/muse-eeg-capture) for capturing Muse EEG data to CSV
+
 ## Development
 
 Common commands:
