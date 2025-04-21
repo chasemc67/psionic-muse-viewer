@@ -8,13 +8,6 @@ It's built with:
 - ShadCN
 - Postgres/Supabase
 
-And we also use:
-
-- Vercel (for deployment and some analytics)
-- Posthog (for feedback, and advanced analytics)
-- Supabase (for data)
-- BuyMeACoffee (for accepting tips)
-
 We always add storybook stories to all our UI components.
 We always add Jest unit tests to all our util files.
 
