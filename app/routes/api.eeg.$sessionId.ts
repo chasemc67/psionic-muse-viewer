@@ -1,6 +1,7 @@
 import { json } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { db } from '~/utils/db.server';
+import { processEEGData } from '~/utils/csv.server';
 
 export async function loader({ params }: LoaderFunctionArgs) {
   if (!params.sessionId) {
@@ -31,26 +32,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
     }
     const csvText = await response.text();
 
-    // Parse CSV data
-    const lines = csvText.trim().split('\n');
-    const electrodeData = lines.slice(1).reduce(
-      (acc, line) => {
-        const [timestamp, electrode, s1, s2, s3, s4, s5] = line
-          .split(',')
-          .map(Number);
-        const avgSignal = (s1 + s2 + s3 + s4 + s5) / 5;
+    // Process the CSV data using our new utility function
+    const processedData = processEEGData(csvText);
 
-        const electrodeName = `Electrode ${electrode}`;
-        if (!acc[electrodeName]) {
-          acc[electrodeName] = [];
-        }
-        acc[electrodeName].push([timestamp, avgSignal]);
-        return acc;
-      },
-      {} as Record<string, [number, number][]>,
-    );
-
-    return json(electrodeData);
+    return json(processedData);
   } catch (error) {
     console.error('Error downloading/parsing CSV:', error);
     throw new Response('Error processing CSV file', { status: 500 });

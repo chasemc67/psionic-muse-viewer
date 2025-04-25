@@ -1,35 +1,77 @@
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-
 export interface EEGDataPoint {
-  timestamp: number;
-  electrode: number;
-  s1: number;
-  s2: number;
-  s3: number;
-  s4: number;
-  s5: number;
-  intuitive: number;
+  timestamp: string;
+  delta: number;
+  theta: number;
+  alpha: number;
+  beta: number;
+  gamma: number;
 }
 
-export async function parseEEGCSV(filename: string): Promise<EEGDataPoint[]> {
-  const filePath = join(process.cwd(), 'app', 'data', filename);
-  const fileContent = await readFile(filePath, 'utf-8');
-
-  const lines = fileContent.trim().split('\n');
+/**
+ * Processes raw EEG data by averaging electrode readings for each frequency band
+ * @param csvText Raw CSV content
+ * @returns Array of processed EEG data points
+ */
+export function processEEGData(csvText: string): EEGDataPoint[] {
+  const lines = csvText.trim().split('\n');
   const headers = lines[0].split(',');
 
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(Number);
+  // Skip header and any empty lines
+  const dataLines = lines.slice(1).filter(line => line.trim());
+
+  return dataLines.map(line => {
+    const values = line.split(',');
+    const timestamp = values[0];
+
+    // Extract electrode readings for each band
+    const deltaReadings = [
+      parseFloat(values[headers.indexOf('Delta_TP9')] || '0'),
+      parseFloat(values[headers.indexOf('Delta_AF7')] || '0'),
+      parseFloat(values[headers.indexOf('Delta_AF8')] || '0'),
+      parseFloat(values[headers.indexOf('Delta_TP10')] || '0'),
+    ].filter(val => !isNaN(val));
+
+    const thetaReadings = [
+      parseFloat(values[headers.indexOf('Theta_TP9')] || '0'),
+      parseFloat(values[headers.indexOf('Theta_AF7')] || '0'),
+      parseFloat(values[headers.indexOf('Theta_AF8')] || '0'),
+      parseFloat(values[headers.indexOf('Theta_TP10')] || '0'),
+    ].filter(val => !isNaN(val));
+
+    const alphaReadings = [
+      parseFloat(values[headers.indexOf('Alpha_TP9')] || '0'),
+      parseFloat(values[headers.indexOf('Alpha_AF7')] || '0'),
+      parseFloat(values[headers.indexOf('Alpha_AF8')] || '0'),
+      parseFloat(values[headers.indexOf('Alpha_TP10')] || '0'),
+    ].filter(val => !isNaN(val));
+
+    const betaReadings = [
+      parseFloat(values[headers.indexOf('Beta_TP9')] || '0'),
+      parseFloat(values[headers.indexOf('Beta_AF7')] || '0'),
+      parseFloat(values[headers.indexOf('Beta_AF8')] || '0'),
+      parseFloat(values[headers.indexOf('Beta_TP10')] || '0'),
+    ].filter(val => !isNaN(val));
+
+    const gammaReadings = [
+      parseFloat(values[headers.indexOf('Gamma_TP9')] || '0'),
+      parseFloat(values[headers.indexOf('Gamma_AF7')] || '0'),
+      parseFloat(values[headers.indexOf('Gamma_AF8')] || '0'),
+      parseFloat(values[headers.indexOf('Gamma_TP10')] || '0'),
+    ].filter(val => !isNaN(val));
+
+    // Calculate averages, handling potential empty arrays
+    const calculateAverage = (readings: number[]) =>
+      readings.length > 0
+        ? readings.reduce((a, b) => a + b) / readings.length
+        : 0;
+
     return {
-      timestamp: values[0],
-      electrode: values[1],
-      s1: values[2],
-      s2: values[3],
-      s3: values[4],
-      s4: values[5],
-      s5: values[6],
-      intuitive: values[7],
+      timestamp,
+      delta: calculateAverage(deltaReadings),
+      theta: calculateAverage(thetaReadings),
+      alpha: calculateAverage(alphaReadings),
+      beta: calculateAverage(betaReadings),
+      gamma: calculateAverage(gammaReadings),
     };
   });
 }

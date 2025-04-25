@@ -3,16 +3,26 @@ import { createRoot } from 'react-dom/client';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { Options, SelectEventObject } from 'highcharts';
 
-// Electrode colors
-const ELECTRODE_COLORS = {
-  'Electrode 0': '#6366f1', // Indigo
-  'Electrode 1': '#8b5cf6', // Violet
-  'Electrode 2': '#ec4899', // Pink
-  'Electrode 3': '#f97316', // Orange
+// Frequency band colors
+const BAND_COLORS = {
+  Delta: '#6366f1', // Indigo
+  Theta: '#8b5cf6', // Violet
+  Alpha: '#ec4899', // Pink
+  Beta: '#f97316', // Orange
+  Gamma: '#10b981', // Emerald
 };
 
+export interface EEGDataPoint {
+  timestamp: string;
+  delta: number;
+  theta: number;
+  alpha: number;
+  beta: number;
+  gamma: number;
+}
+
 export interface EEGVisualizationProps {
-  data: Record<string, [number, number][]>;
+  data: EEGDataPoint[];
 }
 
 export function EEGVisualization({ data }: EEGVisualizationProps) {
@@ -23,6 +33,27 @@ export function EEGVisualization({ data }: EEGVisualizationProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Process data into time series format
+  const processedData = {
+    Delta: data.map(point => [
+      new Date(point.timestamp).getTime(),
+      point.delta,
+    ]),
+    Theta: data.map(point => [
+      new Date(point.timestamp).getTime(),
+      point.theta,
+    ]),
+    Alpha: data.map(point => [
+      new Date(point.timestamp).getTime(),
+      point.alpha,
+    ]),
+    Beta: data.map(point => [new Date(point.timestamp).getTime(), point.beta]),
+    Gamma: data.map(point => [
+      new Date(point.timestamp).getTime(),
+      point.gamma,
+    ]),
+  };
 
   // Initialize and update chart when data changes
   useEffect(() => {
@@ -97,11 +128,11 @@ export function EEGVisualization({ data }: EEGVisualizationProps) {
             color: '#cccccc',
           },
         },
-        series: Object.entries(data).map(([electrode, points]) => ({
+        series: Object.entries(processedData).map(([band, points]) => ({
           type: 'spline',
-          name: electrode,
+          name: band,
           data: points,
-          color: ELECTRODE_COLORS[electrode as keyof typeof ELECTRODE_COLORS],
+          color: BAND_COLORS[band as keyof typeof BAND_COLORS],
           lineWidth: 2,
         })),
         credits: {
