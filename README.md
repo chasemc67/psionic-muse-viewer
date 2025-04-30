@@ -1,6 +1,7 @@
 # Muse EEG Data Annotator
 
-This Muse EEG Data Annotator is our submission for, and a **top 5 finalist** of, the first inaugural SF UAP Hackathon
+This Muse EEG Data Annotator is our submission for the inaugural SF UAP Hackathon.
+It won first place in the psionics category, and 3rd place overall. 
 
 This project aims to collect and annotate data around Anomalous Cognitive Experiences with the ultimate goal of training a model to detect the experiences in real-time.
 
